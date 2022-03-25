@@ -1,83 +1,80 @@
 package com.example.restaurant;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+@Controller
 public class RestaurantService {
-    private List<Restaurant> restaurants = new ArrayList<>();
+
+    private RestaurantRepository restaurantRepository;
+    private TableRepository tableRepository;
+
+    public RestaurantService(RestaurantRepository restaurantRepository, TableRepository tableRepository) {
+        this.restaurantRepository = restaurantRepository;
+        this.tableRepository = tableRepository;
+    }
 
     public Restaurant createRestaurant(Restaurant restaurantToCreate) {
-        restaurants.add(restaurantToCreate);
+        this.restaurantRepository.save(restaurantToCreate);
         return restaurantToCreate;
     }
     public void assignClientsOnRestaurant(String restaurantId, int clients) throws Exception {
         Restaurant restaurant = findRestaurant(restaurantId);
-        restaurant.addClients(clients);
+        List<Table>tables = restaurant.addClients(clients);
+        tableRepository.saveAll(tables);
 
     }
-    private Restaurant findRestaurant(String restaurantID) throws Exception {
-        for (Restaurant restaurant : new ArrayList<>(restaurants)) {
-            if (restaurant.getRestaurantId().equals(restaurantID)) {
-                return restaurant;
-            }
-        }
-        throw new Exception("No s'ha trobat");
+    private Restaurant findRestaurant(String restaurantId) throws Exception {
+        return restaurantRepository.findById(restaurantId).get();
+
     }
     public List<Restaurant> getRestaurants() {
+        List<Restaurant> restaurants = new ArrayList<>();
+        this.restaurantRepository.findAll().forEach(restaurants :: add);
         return restaurants;
     }
 
     public Restaurant getRestaurant( String restaurantId) throws Exception {
-        for (Restaurant restaurant : new ArrayList<>(restaurants)) {
-            if (restaurant.getRestaurantId().equals(restaurantId)) {
-                return restaurant;
-            }
-        }
-        throw new Exception("No s'ha trobat");
+        return restaurantRepository.findById(restaurantId).get();
+
     }
     public List<Table> getTables( String restaurantId) throws Exception {
-        Restaurant restaurant = findRestaurant(restaurantId);
-        List<Table> tables = restaurant.getTables();
-        return tables;
+          Restaurant restaurant = findRestaurant(restaurantId);
+          return restaurant.getTables();
+
     }
     public Table getTable(String restaurantId,String tableId) throws Exception {
-        Restaurant restaurant = findRestaurant(restaurantId);
-        Table table = restaurant.getTable(tableId);
-        return table;
+          return tableRepository.findById(tableId).get();
+
     }
     public void removeAllRestaurants() {
-        restaurants = new ArrayList<>();
+        restaurantRepository.deleteAll();
+
     }
 
     public void removeRestaurant( String restaurantId) {
-        for (Restaurant restaurant : new ArrayList<>(restaurants)) {
-            if (restaurant.getRestaurantId().equals(restaurantId)) {
-                restaurants.remove(restaurant);
-            }
-        }
+        restaurantRepository.deleteById(restaurantId);
+
     }
     public void removeAllTables( String restaurantId) throws Exception {
         Restaurant restaurant = findRestaurant(restaurantId);
-        restaurant.getTables().clear();
+        tableRepository.deleteAllByRestaurant(restaurant);
+
     }
     public void removeTable(String restaurantId,  String tableId) throws Exception {
-        Restaurant restaurant = findRestaurant(restaurantId);
-        restaurant.removeTable(tableId);
+        tableRepository.deleteById(tableId);
+
 
     }
     public void updateRestaurant( Restaurant restaurantToUpdate,  String restaurantId) throws Exception {
-        for (Restaurant restaurant : new ArrayList<>(restaurants)) {
-            if (restaurant.getRestaurantId().equals(restaurantId)) {
-                restaurant.setType(restaurantToUpdate.getType());
-                return;
-            }
-        }
-        throw new Exception("No s'ha trobat");
+        Restaurant restaurant = findRestaurant(restaurantId);
+        restaurant.setType(restaurantToUpdate.getType());
+        restaurant.setName(restaurantToUpdate.getName());
+        restaurantRepository.save(restaurantToUpdate);
+
     }
-
-
-
+    
 }

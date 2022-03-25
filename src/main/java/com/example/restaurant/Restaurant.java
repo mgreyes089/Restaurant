@@ -1,10 +1,16 @@
 package com.example.restaurant;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Entity(name = "restaurants")
 public class Restaurant {
+
+    @Id
     private String restaurantId = UUID.randomUUID().toString();
     private static final int MAX_CAPACITY = 24;
     private static final int MAX_NUMBER_OF_TABLES = 4;
@@ -16,6 +22,7 @@ public class Restaurant {
     private static final int KEBAB = 2;
     private static final int CHINO = 3;
 
+    @OneToMany(mappedBy = "restaurant")
     private List<Table> tables = new ArrayList<>();
 
     public Restaurant() {
@@ -60,16 +67,20 @@ public class Restaurant {
     }
 
 
-    public void addClients(int numOfPeople) throws Exception {
+    public List<Table> addClients(int numOfPeople) throws Exception {
+        List<Table> result = new ArrayList<>();
         checkPeopleCanEnter(numOfPeople);
 
         while (numOfPeople > 0 && hasRemainingTables()) {
             Table table = new Table();
+            table.setRestaurant(this);
             numOfPeople = table.addClients(numOfPeople);
-            tables.add(table);
+            this.tables.add(table);
+            result.add(table);
         }
 
         if (numOfPeople > 0) throw new Exception("No quedan taules");
+        return result;
     }
 
     private boolean hasRemainingTables() {
@@ -123,8 +134,14 @@ public class Restaurant {
         return tables;
     }
 
-    public void setType(int type) {
+    public void setType(int type) throws Exception {
+        checkType(type);
         this.type = type;
+    }
+
+    public void setName(String name) throws Exception {
+        checkName(name);
+        this.name = name;
     }
 
     public String getRestaurantId() {
